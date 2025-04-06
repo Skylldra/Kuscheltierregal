@@ -23,7 +23,10 @@ const plushies = {
   12: "Frosch-Plushie"
 };
 
-const IMAGE_EXTENSIONS = [".webp", ".jpg", ".jpeg", ".png", ".JPG", ".JPEG", ".PNG", ".WEBP"];
+const IMAGE_EXTENSIONS = [
+  ".webp", ".jpg", ".jpeg", ".png",
+  ".JPG", ".JPEG", ".PNG", ".WEBP"
+];
 const TOTAL_PLUSHIES = Object.keys(plushies).length;
 
 const pool = new Pool({
@@ -39,9 +42,18 @@ app.use(express.static("."));
 app.get("/get-image/:id/:type", (req, res) => {
   const { id, type } = req.params;
   for (const ext of IMAGE_EXTENSIONS) {
-    const filename = path.join(__dirname, "plushie", `${id}${type === "blurred" ? "_blurred" : ""}${ext}`);
+    const filename = path.join(
+      __dirname,
+      "plushie",
+      `${id}${type === "blurred" ? "_blurred" : ""}${ext}`
+    );
+
+    console.log("Prüfe:", filename); // Debug-Ausgabe
+
     if (fs.existsSync(filename)) {
-      return res.json({ path: `/plushie/${id}${type === "blurred" ? "_blurred" : ""}${ext}` });
+      return res.json({
+        path: `/plushie/${id}${type === "blurred" ? "_blurred" : ""}${ext}`
+      });
     }
   }
   res.status(404).json({ error: "Bild nicht gefunden" });
