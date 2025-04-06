@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Plüschtiere Sammlung</title>
+  <style>
+    body {
+      background-color: #1a1a1a;
+      color: white;
+      font-family: Arial, sans-serif;
+      text-align: center;
+    }
+    .plushie-container {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+      margin-top: 20px;
+    }
+    .plushie-container img {
+      width: 100px;
+      height: 100px;
+      object-fit: cover;
+      border: 2px solid #444;
+      border-radius: 10px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Plüschtiere Sammlung von <span id="username">?</span></h1>
+  <div class="plushie-container" id="plushieContainer"></div>
+
+  <script>
+    const username = new URLSearchParams(window.location.search).get('user') || 'Unbekannt';
+    document.getElementById("username").textContent = username;
+
+    fetch(`/${username}`)
+      .then(res => res.json())
+      .then(data => {
+        const total = data.total;
+        const owned = new Set(data.owned);
+        const container = document.getElementById("plushieContainer");
+
+        for (let i = 1; i <= total; i++) {
+          const img = document.createElement("img");
+          img.src = owned.has(i.toString()) ? `plushie/${i}.png` : `plushie/${i}_blurred.png`;
+          container.appendChild(img);
+        }
+      });
+  </script>
+</body>
+</html>
