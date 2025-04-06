@@ -8,7 +8,7 @@ const port = process.env.PORT || 3000;
 
 // Kuscheltier-Konfiguration
 const plushies = {
-  1: "Schnecken-Plushie",
+  1: "Pilz-Plushie",
   2: "Bärchen-Plushie",
   3: "Fuchs-Plushie",
   4: "Dino-Plushie",
