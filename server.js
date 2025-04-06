@@ -28,15 +28,16 @@ const IMAGE_EXTENSIONS = [".webp", ".jpg", ".png"];
 
 // 👉 Route zum erkennen des Dateityps
 app.get("/get-image/:id/:type", (req, res) => {
-  const { id, type } = req.params; // type = "" oder "blurred"
+  const { id, type } = req.params;
   for (const ext of IMAGE_EXTENSIONS) {
-    const filename = `${__dirname}/plushie/${id}${type === "blurred" ? "_blurred" : ""}${ext}`;
+    const filename = path.join(__dirname, "plushie", `${id}${type === "blurred" ? "_blurred" : ""}${ext}`);
     if (fs.existsSync(filename)) {
-      return res.json({ path: `plushie/${id}${type === "blurred" ? "_blurred" : ""}${ext}` });
+      return res.json({ path: `/plushie/${id}${type === "blurred" ? "_blurred" : ""}${ext}` });
     }
   }
-  return res.status(404).json({ error: "Bild nicht gefunden" });
+  res.status(404).json({ error: "Bild nicht gefunden" });
 });
+
 
 const TOTAL_PLUSHIES = Object.keys(plushies).length;
 
