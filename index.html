@@ -73,30 +73,32 @@
       .then(data => {
         const container = document.getElementById("plushieContainer");
 
-        data.collection.forEach(async plushie => {
-          const card = document.createElement("div");
-          card.classList.add("plushie-card");
+        (async () => {
+          for (const plushie of data.collection) {
+            const card = document.createElement("div");
+            card.classList.add("plushie-card");
 
-          const img = document.createElement("img");
-          const path = await getImagePath(plushie.id, !plushie.owned);
-          img.src = path;
-          img.alt = plushie.name;
-          img.title = plushie.name;
+            const img = document.createElement("img");
+            const path = await getImagePath(plushie.id, !plushie.owned);
+            img.src = path;
+            img.alt = plushie.name;
+            img.title = plushie.name;
 
-          const name = document.createElement("div");
-          name.classList.add("plushie-name");
-          name.textContent = plushie.name;
+            const name = document.createElement("div");
+            name.classList.add("plushie-name");
+            name.textContent = plushie.name;
 
-          const date = document.createElement("div");
-          date.classList.add("plushie-date");
-          date.textContent = plushie.date ? `Gefunden am ${formatDate(plushie.date)}` : "";
+            const date = document.createElement("div");
+            date.classList.add("plushie-date");
+            date.textContent = plushie.date ? `Gefunden am ${formatDate(plushie.date)}` : "";
 
-          card.appendChild(img);
-          card.appendChild(name);
-          card.appendChild(date);
+            card.appendChild(img);
+            card.appendChild(name);
+            card.appendChild(date);
 
-          container.appendChild(card);
-        });
+            container.appendChild(card);
+          }
+        })();
       })
       .catch(() => {
         document.body.innerHTML = "<p>Fehler beim Abrufen der Sammlung.</p>";
