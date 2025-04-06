@@ -32,25 +32,31 @@
   <div class="plushie-container" id="plushieContainer"></div>
 
   <script>
-  const username = window.location.pathname.replace("/", "") || "Unbekannt";
-  document.getElementById("username").textContent = username;
+    const username = window.location.pathname.replace("/", "") || "Unbekannt";
+    document.getElementById("username").textContent = username;
 
-  fetch(`/${username}`)
-    .then(res => res.json())
-    .then(data => {
-      const total = data.collection.length;
-      const container = document.getElementById("plushieContainer");
+    // 🔍 Bildpfad automatisch vom Server holen
+    function getImagePath(id, blurred) {
+      return fetch(`/get-image/${id}/${blurred ? "blurred" : ""}`)
+        .then(res => res.ok ? res.json() : null)
+        .then(data => data?.path || "");
+    }
 
-      data.collection.forEach(plushie => {
-        const img = document.createElement("img");
-        img.src = plushie.owned
-          ? `plushie/${plushie.id}.png`
-          : `plushie/${plushie.id}_blurred.png`;
-        img.alt = plushie.name;
-        img.title = plushie.name;
-        container.appendChild(img);
+    // 🎁 Sammlung abrufen
+    fetch(`/${username}`)
+      .then(res => res.json())
+      .then(data => {
+        const container = document.getElementById("plushieContainer");
+
+        data.collection.forEach(async plushie => {
+          const img = document.createElement("img");
+          const path = await getImagePath(plushie.id, !plushie.owned);
+          img.src = path;
+          img.alt = plushie.name;
+          img.title = plushie.name;
+          container.appendChild(img);
+        });
       });
-    });
-</script>
+  </script>
 </body>
 </html>
