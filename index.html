@@ -49,7 +49,11 @@
   <div class="plushie-container" id="plushieContainer"></div>
 
   <script>
-    const username = window.location.pathname.replace("/", "") || "Unbekannt";
+    const urlParams = new URLSearchParams(window.location.search);
+    const queryUser = urlParams.get("user");
+    const pathUser = window.location.pathname.replace("/", "");
+    const username = queryUser || pathUser || "Unbekannt";
+
     document.getElementById("username").textContent = username;
 
     function getImagePath(id, blurred) {
