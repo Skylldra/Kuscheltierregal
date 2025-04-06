@@ -32,22 +32,25 @@
   <div class="plushie-container" id="plushieContainer"></div>
 
   <script>
-    const username = window.location.pathname.replace("/", "") || "Unbekannt";
-    document.getElementById("username").textContent = username;
+  const username = window.location.pathname.replace("/", "") || "Unbekannt";
+  document.getElementById("username").textContent = username;
 
-    fetch(`/${username}`)
-      .then(res => res.json())
-      .then(data => {
-        const total = data.total;
-        const owned = new Set(data.owned);
-        const container = document.getElementById("plushieContainer");
+  fetch(`/${username}`)
+    .then(res => res.json())
+    .then(data => {
+      const total = data.collection.length;
+      const container = document.getElementById("plushieContainer");
 
-        for (let i = 1; i <= total; i++) {
-          const img = document.createElement("img");
-          img.src = owned.has(i.toString()) ? `plushie/${i}.png` : `plushie/${i}_blurred.png`;
-          container.appendChild(img);
-        }
+      data.collection.forEach(plushie => {
+        const img = document.createElement("img");
+        img.src = plushie.owned
+          ? `plushie/${plushie.id}.png`
+          : `plushie/${plushie.id}_blurred.png`;
+        img.alt = plushie.name;
+        img.title = plushie.name;
+        container.appendChild(img);
       });
-  </script>
+    });
+</script>
 </body>
 </html>
