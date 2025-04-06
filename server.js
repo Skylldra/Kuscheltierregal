@@ -71,6 +71,13 @@ app.get("/getrandom", async (req, res) => {
 app.get("/:username", async (req, res) => {
   const username = req.params.username;
 
+  // Wenn der Browser HTML will → HTML-Seite ausliefern
+  if (req.headers.accept && req.headers.accept.includes("text/html")) {
+    res.sendFile(path.join(__dirname, "index.html"));
+    return;
+  }
+
+  // Ansonsten → API-Antwort mit Sammlung im JSON-Format
   try {
     const result = await pool.query(
       "SELECT plushie, draw_date FROM plushie_collection WHERE LOWER(username) = LOWER($1)",
