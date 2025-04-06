@@ -1,12 +1,13 @@
 const express = require("express");
 const { Pool } = require("pg");
 const path = require("path");
+const fs = require("fs");
 require("dotenv").config();
 
 const app = express();
 const port = process.env.PORT || 3000;
 
-// Kuscheltier-Konfiguration
+// 🧸 Kuscheltier-Konfiguration
 const plushies = {
   1: "Pilz-Plushie",
   2: "Bärchen-Plushie",
@@ -22,11 +23,19 @@ const plushies = {
   12: "Frosch-Plushie"
 };
 
-const fs = require("fs");
-
 const IMAGE_EXTENSIONS = [".webp", ".jpg", ".png"];
+const TOTAL_PLUSHIES = Object.keys(plushies).length;
 
-// 👉 Route zum erkennen des Dateityps
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: { rejectUnauthorized: false }
+});
+
+// 📦 Statische Dateien
+app.use(express.static("plushie"));
+app.use(express.static("."));
+
+// 🔎 Route zum Erkennen des Dateityps
 app.get("/get-image/:id/:type", (req, res) => {
   const { id, type } = req.params;
   for (const ext of IMAGE_EXTENSIONS) {
@@ -38,18 +47,7 @@ app.get("/get-image/:id/:type", (req, res) => {
   res.status(404).json({ error: "Bild nicht gefunden" });
 });
 
-
-const TOTAL_PLUSHIES = Object.keys(plushies).length;
-
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: { rejectUnauthorized: false }
-});
-
-app.use(express.static("plushie"));
-app.use(express.static("."));
-
-// 👉 Route zum Ziehen eines zufälligen Plüschtiers
+// 🎁 Route zum Ziehen eines zufälligen Plüschtiers
 app.get("/getrandom", async (req, res) => {
   const username = req.query.user;
   if (!username) return res.status(400).send("Bitte gib einen Benutzernamen an.");
@@ -64,42 +62,44 @@ app.get("/getrandom", async (req, res) => {
     );
     res.send(`🎁🧸 Du hast ${plushieName} gezogen!`);
   } catch (err) {
-    console.error(err);
+    console.error("Fehler beim Speichern:", err);
     res.status(500).send("Fehler beim Speichern.");
   }
 });
 
-// 👉 Route zur Anzeige der Sammlung eines Nutzers
+// 📚 Route zur Anzeige der Sammlung eines Nutzers
 app.get("/:username", async (req, res) => {
   const username = req.params.username;
 
   try {
     const result = await pool.query(
-      "SELECT plushie, draw_date FROM plushie_collection WHERE LOWER(username) = LOWER($1)"
+      "SELECT plushie, draw_date FROM plushie_collection WHERE LOWER(username) = LOWER($1)",
       [username]
     );
-    const ownedMap = new Map();
-result.rows.forEach(row => {
-  ownedMap.set(parseInt(row.plushie), row.draw_date);
-});
-    const response = [];
 
+    const ownedMap = new Map();
+    result.rows.forEach(row => {
+      ownedMap.set(parseInt(row.plushie), row.draw_date);
+    });
+
+    const response = [];
     for (let i = 1; i <= TOTAL_PLUSHIES; i++) {
       response.push({
-  id: i,
-  name: plushies[i],
-  owned: ownedMap.has(i),
-  date: ownedMap.get(i) || null
-});
+        id: i,
+        name: plushies[i],
+        owned: ownedMap.has(i),
+        date: ownedMap.get(i) || null
+      });
     }
 
     res.json({ username, collection: response });
   } catch (err) {
-    console.error(err);
+    console.error("Fehler beim Abrufen der Sammlung:", err);
     res.status(500).send("Fehler beim Abrufen der Sammlung.");
   }
 });
 
+// 🌐 Server starten
 app.listen(port, () => {
   console.log(`Server läuft unter https://kuscheltierregal.onrender.com`);
 });
