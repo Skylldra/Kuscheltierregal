@@ -58,18 +58,22 @@ app.get("/:username", async (req, res) => {
 
   try {
     const result = await pool.query(
-      "SELECT plushie FROM plushie_collection WHERE username = $1",
+      "SELECT plushie, draw_date FROM plushie_collection WHERE LOWER(username) = LOWER($1)"
       [username]
     );
-    const owned = result.rows.map(row => parseInt(row.plushie));
+    const ownedMap = new Map();
+result.rows.forEach(row => {
+  ownedMap.set(parseInt(row.plushie), row.draw_date);
+});
     const response = [];
 
     for (let i = 1; i <= TOTAL_PLUSHIES; i++) {
       response.push({
-        id: i,
-        name: plushies[i],
-        owned: owned.includes(i)
-      });
+  id: i,
+  name: plushies[i],
+  owned: ownedMap.has(i),
+  date: ownedMap.get(i) || null
+});
     }
 
     res.json({ username, collection: response });
