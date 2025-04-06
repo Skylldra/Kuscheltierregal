@@ -32,7 +32,7 @@
   <div class="plushie-container" id="plushieContainer"></div>
 
   <script>
-    const username = new URLSearchParams(window.location.search).get('user') || 'Unbekannt';
+    const username = window.location.pathname.replace("/", "") || "Unbekannt";
     document.getElementById("username").textContent = username;
 
     fetch(`/${username}`)
