@@ -23,7 +23,7 @@ const plushies = {
   12: "Frosch-Plushie"
 };
 
-const IMAGE_EXTENSIONS = [".webp", ".jpg", ".png"];
+const IMAGE_EXTENSIONS = [".webp", ".jpg", ".png", ".jpeg", ".JPG", ".PNG"];
 const TOTAL_PLUSHIES = Object.keys(plushies).length;
 
 const pool = new Pool({
