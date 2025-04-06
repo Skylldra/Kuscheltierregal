@@ -45,7 +45,7 @@ app.get("/getrandom", async (req, res) => {
       "INSERT INTO plushie_collection (username, plushie) VALUES ($1, $2)",
       [username, plushieId]
     );
-    res.send(`🎁 ${username} hat ${plushieName} gezogen!`);
+    res.send(`🎁🧸 Du hast ${plushieName} gezogen!`);
   } catch (err) {
     console.error(err);
     res.status(500).send("Fehler beim Speichern.");
