@@ -42,67 +42,150 @@
       font-size: 0.85em;
       color: #ccc;
     }
+    .loading {
+      margin-top: 30px;
+      font-size: 1.2em;
+    }
+    .plushie-owned {
+      border-color: #4CAF50;
+    }
+    .error-message {
+      color: #ff6b6b;
+      margin-top: 30px;
+    }
   </style>
 </head>
 <body>
   <h1>Plüschtiere Sammlung von <span id="username">?</span></h1>
-  <div class="plushie-container" id="plushieContainer"></div>
-
+  <div class="plushie-container" id="plushieContainer">
+    <div class="loading">Lade Sammlung...</div>
+  </div>
   <script>
+    // Username aus URL oder Pfad extrahieren
     const urlParams = new URLSearchParams(window.location.search);
     const queryUser = urlParams.get("user");
     const pathUser = window.location.pathname.replace("/", "");
     const username = queryUser || pathUser || "Unbekannt";
-
     document.getElementById("username").textContent = username;
-
-    function getImagePath(id, blurred) {
-      return fetch(`/get-image/${id}/${blurred ? "blurred" : ""}`)
-        .then(res => res.ok ? res.json() : null)
-        .then(data => data?.path || "");
+    document.title = `${username}'s Plüschtiere Sammlung`;
+    
+    // Verbesserte Funktion zum Abrufen der Bildpfade
+    async function getImagePath(id, blurred) {
+      try {
+        const type = blurred ? "blurred" : "normal";
+        const response = await fetch(`/get-image/${id}/${type}`);
+        if (!response.ok) {
+          console.warn(`Konnte Bild nicht finden für ID ${id}, Type ${type}. Versuche Alternative...`);
+          // Fallback auf nicht-verschwommen, wenn verschwommen nicht existiert
+          if (blurred) {
+            const normalResponse = await fetch(`/get-image/${id}/normal`);
+            if (normalResponse.ok) {
+              const data = await normalResponse.json();
+              console.log(`Verwende normales Bild als Fallback für ID ${id}`);
+              return data.path;
+            }
+          }
+          return "";
+        }
+        const data = await response.json();
+        return data.path;
+      } catch (error) {
+        console.error(`Fehler beim Abrufen des Bildes für ID ${id}:`, error);
+        return "";
+      }
     }
-
+    
+    // Datumsformatierung
     function formatDate(dateStr) {
       if (!dateStr) return "";
       const date = new Date(dateStr);
       return `${String(date.getDate()).padStart(2, '0')}.${String(date.getMonth() + 1).padStart(2, '0')}.${date.getFullYear()}`;
     }
-
-    fetch(`/${username}`)
-      .then(res => res.json())
-      .then(data => {
+    
+    // Sammlung abrufen und anzeigen
+    async function loadCollection() {
+      try {
+        const response = await fetch(`/${username}`);
+        if (!response.ok) {
+          throw new Error(`HTTP-Fehler: ${response.status}`);
+        }
+        
+        const data = await response.json();
         const container = document.getElementById("plushieContainer");
-
-        (async () => {
-          for (const plushie of data.collection) {
-            const card = document.createElement("div");
-            card.classList.add("plushie-card");
-
-            const img = document.createElement("img");
-            const path = await getImagePath(plushie.id, !plushie.owned);
-            img.src = path;
-            img.alt = plushie.name;
-            img.title = plushie.name;
-
-            const name = document.createElement("div");
-            name.classList.add("plushie-name");
-            name.textContent = plushie.name;
-
-            const date = document.createElement("div");
-            date.classList.add("plushie-date");
-            date.textContent = plushie.date ? `Gefunden am ${formatDate(plushie.date)}` : "";
-
-            card.appendChild(img);
-            card.appendChild(name);
-            card.appendChild(date);
-
-            container.appendChild(card);
+        container.innerHTML = ""; // Lade-Nachricht entfernen
+        
+        for (const plushie of data.collection) {
+          const card = document.createElement("div");
+          card.classList.add("plushie-card");
+          
+          const img = document.createElement("img");
+          // Versuche erst das passende Bild zu laden (verschwommen oder normal)
+          let imagePath = await getImagePath(plushie.id, !plushie.owned);
+          
+          // Wenn kein Bild gefunden wurde, versuche direkte Dateinamen als Fallback
+          if (!imagePath) {
+            const fallbackExtensions = [".webp", ".jpg", ".jpeg", ".png"];
+            for (const ext of fallbackExtensions) {
+              const fallbackPath = `/plushie/${plushie.id}${!plushie.owned ? "_blurred" : ""}${ext}`;
+              try {
+                const testImg = new Image();
+                testImg.src = fallbackPath;
+                const exists = await new Promise(resolve => {
+                  testImg.onload = () => resolve(true);
+                  testImg.onerror = () => resolve(false);
+                  setTimeout(() => resolve(false), 500); // Timeout nach 500ms
+                });
+                
+                if (exists) {
+                  imagePath = fallbackPath;
+                  break;
+                }
+              } catch (e) {
+                // Ignoriere Fehler und versuche nächste Extension
+              }
+            }
           }
-        })();
-      })
-      .catch(() => {
-        document.body.innerHTML = "<p>Fehler beim Abrufen der Sammlung.</p>";
-      });
+          
+          // Wenn immer noch kein Bild gefunden wurde, verwende Platzhalter
+          if (!imagePath) {
+            imagePath = "https://via.placeholder.com/100?text=Kein+Bild";
+          }
+          
+          img.src = imagePath;
+          img.alt = plushie.name;
+          img.title = plushie.name;
+          
+          if (plushie.owned) {
+            img.classList.add("plushie-owned");
+          }
+          
+          const name = document.createElement("div");
+          name.classList.add("plushie-name");
+          name.textContent = plushie.name;
+          
+          const date = document.createElement("div");
+          date.classList.add("plushie-date");
+          date.textContent = plushie.owned ? `Gefunden am ${formatDate(plushie.date)}` : "";
+          
+          card.appendChild(img);
+          card.appendChild(name);
+          card.appendChild(date);
+          container.appendChild(card);
+        }
+      } catch (error) {
+        console.error("Fehler beim Laden der Sammlung:", error);
+        const container = document.getElementById("plushieContainer");
+        container.innerHTML = `
+          <div class="error-message">
+            Fehler beim Abrufen der Sammlung für ${username}.<br>
+            Bitte versuche es später noch einmal.
+          </div>
+        `;
+      }
+    }
+    
+    // Sammlung laden
+    loadCollection();
   </script>
 </body>
 </html>
